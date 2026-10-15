@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f7f0df">
+<title>OpenStreetMap Discover — Find places nearby</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#fbf6e9;--paper2:#f5ecd8;--ink:#24312b;--muted:#69776e;--green:#176b43;--green2:#248353;--line:#e5d9c2;--card:rgba(255,253,247,.94);--shadow:0 14px 38px rgba(87,69,35,.11)}
+*{box-sizing:border-box}body{margin:0;font-family:'DM Sans',sans-serif;color:var(--ink);background:var(--paper);transition:background .25s,color .25s}
+h1,h2,.serif{font-family:'Playfair Display',serif}.app-shell{min-height:100vh;background-image:linear-gradient(130deg,rgba(255,250,235,.70),rgba(248,239,218,.58)),url('assets/desktop-background.png');background-size:cover;background-position:center top;background-repeat:no-repeat;background-attachment:fixed}
+.topbar{height:76px;position:relative;isolation:isolate;overflow:hidden;border:1px solid rgba(255,255,255,.62);border-bottom-color:rgba(178,145,84,.28);background:linear-gradient(115deg,rgba(255,255,255,.68),rgba(255,248,226,.40) 48%,rgba(255,255,255,.58));backdrop-filter:blur(26px) saturate(1.55);-webkit-backdrop-filter:blur(26px) saturate(1.55);box-shadow:0 8px 28px rgba(105,79,35,.10),inset 0 1px 0 rgba(255,255,255,.9),inset 0 -1px 0 rgba(255,255,255,.34)}.topbar:before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.48),rgba(255,255,255,.08) 48%,rgba(255,255,255,.20));}.topbar:after{content:'';position:absolute;left:0;right:0;top:0;height:1px;pointer-events:none;background:rgba(255,255,255,.96);box-shadow:0 1px 12px rgba(255,255,255,.38)}.topbar>*{position:relative;z-index:1}
+.topbar nav a{transition:color .18s ease,opacity .18s ease}.topbar nav a:hover{opacity:.82}.brand-pin{width:34px;height:34px;display:inline-grid;place-items:center;background:linear-gradient(145deg,#7d8c54,#155f3e);border-radius:50% 50% 50% 8px;transform:rotate(-45deg);box-shadow:0 4px 10px #315c3a2b}.brand-pin svg{transform:rotate(45deg)}
+.glass{background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);backdrop-filter:blur(14px)}
+.field{background:rgba(255,255,255,.8);border:1px solid var(--line);color:var(--ink);outline:none;transition:border .2s,box-shadow .2s}.field:focus{border-color:#58956e;box-shadow:0 0 0 3px #4c9a6820}
+.chip{border:1px solid var(--line);background:rgba(255,253,247,.88);color:#526258;transition:all .18s;white-space:nowrap}.chip:hover{border-color:#8db39a;transform:translateY(-1px)}.chip.active{background:linear-gradient(135deg,#2d8656,#0e633b);color:white;border-color:transparent;box-shadow:0 5px 14px #176b4330}
+.primary{background:linear-gradient(135deg,#258354,#0e613a);color:white;box-shadow:0 5px 14px #176b4329;transition:transform .18s,filter .18s}.primary:hover{filter:brightness(1.06);transform:translateY(-1px)}
+#map{height:100%;min-height:540px;background:#e9e7d5;border-radius:22px;z-index:1}.leaflet-container{font-family:'DM Sans',sans-serif}.leaflet-control-zoom a{color:#176b43!important}.leaflet-popup-content-wrapper{border-radius:12px}.leaflet-popup-content{font-family:'DM Sans',sans-serif}
+.place-row{border:1px solid transparent;transition:background .18s,border .18s}.place-row:hover{background:#f8f3e8}.place-row.selected{background:#edf5e9;border-color:#8eb99b}.place-icon{width:74px;height:68px;flex-shrink:0;border-radius:12px;display:grid;place-items:center;background:linear-gradient(145deg,#e7eddb,#f8e5c2);color:#176b43}
+.status{font-size:12px}.map-tag{background:#fffdf7;border:1px solid #e3d7c1;box-shadow:0 5px 15px #40331c20;border-radius:9px;padding:7px 10px;font-size:11px;font-weight:700}
+.hero-art{position:absolute;inset:0;pointer-events:none;overflow:hidden;opacity:.42}.hero-art:before{content:"";position:absolute;right:-60px;top:-100px;width:440px;height:280px;border-radius:48% 0 55% 60%;background:radial-gradient(ellipse at 60% 60%,#d6c88b70,transparent 65%)}.hero-art:after{content:"";position:absolute;left:-65px;bottom:-125px;width:300px;height:250px;border-radius:50%;background:radial-gradient(ellipse,#8d9b5a55,transparent 70%)}
+.dark{--paper:#17231d;--paper2:#202e25;--ink:#edf2e8;--muted:#aab8aa;--green:#83c69a;--green2:#a2d6ad;--line:#3a4b3d;--card:rgba(31,45,35,.95);--shadow:0 14px 38px rgba(0,0,0,.22);background:var(--paper);color:var(--ink)}
+.dark .app-shell{background-image:linear-gradient(130deg,rgba(18,31,23,.86),rgba(24,39,29,.82)),url('assets/desktop-background.png');background-size:cover;background-position:center top;background-attachment:fixed}.dark .topbar{background:linear-gradient(115deg,rgba(27,47,34,.78),rgba(31,54,39,.58) 48%,rgba(22,39,29,.76));border-color:rgba(211,231,208,.24);border-bottom-color:rgba(130,173,136,.25);box-shadow:0 8px 28px rgba(0,0,0,.20),inset 0 1px 0 rgba(255,255,255,.24)}.dark .topbar:before{background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.015) 48%,rgba(255,255,255,.07))}.dark .field{background:#202e25;color:var(--ink)}.dark .chip{background:#243429;color:#cbd9c8;border-color:#405443}.dark .chip.active{background:linear-gradient(135deg,#2e8252,#185c3a);color:#fff}.dark .place-row:hover{background:#283a2c}.dark .place-row.selected{background:#294333;border-color:#528c65}.dark .place-icon{background:linear-gradient(145deg,#2c4935,#4a4930);color:#bce3c4}.dark #map{filter:brightness(.82) saturate(.78)}.dark .text-slate-500,.dark .text-slate-600{color:#b3c1b4!important}.dark .text-slate-700,.dark .text-slate-800{color:#e3ebdf!important}.dark .border-stone-200{border-color:#3a4b3d!important}.dark .bg-white{background:#243429!important}.dark .bg-stone-50{background:#1d2b22!important}
+@media(max-width:900px){.topbar{height:64px}#map{min-height:360px;height:47vh}.desktop-workspace{display:flex;flex-direction:column}.desktop-results{display:none}.desktop-results.show-list{display:flex;order:2;max-height:42vh}.map-wrap{order:1}.hero-layout{display:block}.hero-copy{margin-bottom:18px}.desktop-search{width:100%}.hero-art{opacity:.25}}
+@media(max-width:520px){.app-shell{background-image:linear-gradient(180deg,rgba(255,249,232,.66),rgba(255,247,224,.54)),url('assets/mobile-background.png');background-size:cover;background-position:center top;background-attachment:scroll}.dark .app-shell{background-image:linear-gradient(180deg,rgba(18,31,23,.84),rgba(24,39,29,.80)),url('assets/mobile-background.png');background-size:cover;background-position:center top;background-attachment:scroll}.topbar{padding-inline:14px}.brand-name{font-size:17px}.brand-sub{font-size:14px}.hero-wrap{padding:18px 14px 12px}.hero-copy h1{font-size:30px;line-height:1.08}.hero-copy p{font-size:13px}.search-row{gap:8px}.location-button{max-width:150px}.category-scroll{margin-right:-14px;padding-right:14px;overflow-x:auto;scrollbar-width:none}.category-scroll::-webkit-scrollbar{display:none}.workspace-wrap{padding:0 10px 12px}.workspace-card{border-radius:18px;padding:8px}.map-wrap{position:relative}.map-overlay{left:10px;right:10px;bottom:10px}.mobile-sheet{display:block}.desktop-results{display:none!important}.map-toggle{display:flex}.detail-desktop{display:none}#map{min-height:390px;height:52vh;border-radius:14px}.mobile-sheet{margin-top:-26px;position:relative;z-index:500;border-radius:22px 22px 16px 16px}.mobile-sheet.list-mode{margin-top:0}.mobile-sheet .sheet-content{max-height:35vh;overflow:auto}.place-icon{width:56px;height:56px}.place-row{padding:10px!important}.detail-mobile{display:block}.mobile-map-controls{bottom:95px!important}.footer-note{display:none}}
+@media(min-width:521px){.mobile-sheet,.detail-mobile,.map-toggle{display:none!important}}
+</style>
+</head>
+<body>
+<div class="app-shell min-h-screen relative">
+  <header class="topbar relative z-20 flex items-center justify-between px-5 md:px-8">
+    <a href="#" class="flex items-center gap-3 no-underline" aria-label="OpenStreetMap Discover home">
+      <span class="brand-pin"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.3"><circle cx="12" cy="9" r="3.2"/><path d="M12 22s7-7.1 7-13a7 7 0 1 0-14 0c0 5.9 7 13 7 13Z"/></svg></span>
+      <span class="brand-name text-xl md:text-2xl font-semibold tracking-tight">OpenStreetMap</span>
+      <span class="h-7 w-px bg-stone-300 mx-1"></span><span class="brand-sub text-lg text-green-800 font-semibold">Discover</span>
+    </a>
+    <nav class="hidden md:flex items-center gap-8 text-sm text-slate-600"><a class="hover:text-green-800" href="https://www.openstreetmap.org/#map=15/35.80675/-90.72784">Map</a><a class="font-semibold text-green-800 border-b-2 border-green-700 pb-2" href="#discover">Discover</a><a class="hover:text-green-800" href="https://www.openstreetmap.org/login?referer=%2Fedit">Contribute</a><a class="hover:text-green-800" href="https://wiki.openstreetmap.org/" target="_blank" rel="noreferrer">Help</a></nav>
+    <button id="themeToggle" class="rounded-full border border-stone-200 bg-white/70 p-2.5 hover:shadow-md" aria-label="Toggle dark theme" title="Toggle dark theme"><svg id="themeIcon" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.5 14.1A8.4 8.4 0 0 1 9.9 3.5 8.5 8.5 0 1 0 20.5 14.1Z"/></svg></button>
+  </header>
+
+  <main id="discover" class="relative">
+    <div class="hero-art"></div>
+    <section class="hero-wrap relative z-10 px-5 md:px-10 pt-7 pb-5">
+      <div class="hero-layout grid grid-cols-[minmax(270px,.8fr)_minmax(450px,1.5fr)] gap-8 items-center">
+        <div class="hero-copy">
+          <p class="uppercase tracking-[.19em] text-xs font-bold text-green-800 mb-3">A little closer to local</p>
+          <h1 class="text-4xl lg:text-[42px] leading-[1.12] tracking-tight font-semibold">Find the places you need,<br><em class="text-green-800 font-medium">right where you are.</em></h1>
+          <p class="text-sm text-slate-600 mt-4 max-w-md leading-relaxed">Discover nearby cafés, restaurants, pharmacies, ATMs and public toilets — powered by OpenStreetMap.</p>
+          <div id="locationStatus" class="mt-3 text-xs text-slate-500 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-amber-500"></span>Using sample map area · Bengaluru</div>
+        </div>
+        <div class="desktop-search space-y-3">
+          <form id="searchForm" class="search-row flex gap-3">
+            <label class="field flex-1 rounded-full px-5 py-4 flex items-center gap-3 min-w-0">
+              <svg class="shrink-0 text-stone-500" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m16 16 4.5 4.5"/></svg>
+              <input id="searchInput" class="w-full bg-transparent outline-none text-sm" placeholder="What are you looking for?" aria-label="What are you looking for?" autocomplete="off">
+            </label>
+            <button type="button" id="locationButton" class="field location-button rounded-full px-4 py-3 flex items-center gap-2 text-sm whitespace-nowrap"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#28754a" stroke-width="2"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span id="locationLabel">Current location</span><span>⌄</span></button>
+            <button type="submit" class="primary rounded-full px-5" aria-label="Search"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m16 16 4.5 4.5"/></svg></button>
+          </form>
+          <div class="category-scroll flex flex-wrap gap-2.5" id="categoryChips">
+            <button class="chip active rounded-full px-5 py-3 text-sm font-semibold flex items-center gap-2" data-category="cafe"><span>☕</span> Cafés</button>
+            <button class="chip rounded-full px-5 py-3 text-sm font-semibold flex items-center gap-2" data-category="restaurant"><span>♨</span> Restaurants</button>
+            <button class="chip rounded-full px-5 py-3 text-sm font-semibold flex items-center gap-2" data-category="pharmacy"><span>✚</span> Pharmacies</button>
+            <button class="chip rounded-full px-5 py-3 text-sm font-semibold flex items-center gap-2" data-category="atm"><span>▣</span> ATMs</button>
+            <button class="chip rounded-full px-5 py-3 text-sm font-semibold flex items-center gap-2" data-category="toilets"><span>♙</span> Public Toilets</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="workspace-wrap px-4 md:px-10 pb-8 relative z-10">
+      <div class="workspace-card glass rounded-[24px] p-2 md:p-3">
+        <div class="desktop-workspace grid grid-cols-[minmax(290px, .48fr)_minmax(0,1.35fr)] gap-3">
+          <aside id="resultsPanel" class="desktop-results flex flex-col min-h-[570px] max-h-[min(72vh,760px)] overflow-hidden rounded-2xl bg-white/45">
+            <div class="flex items-center justify-between px-4 pt-4 pb-3">
+              <div><h2 id="resultsHeading" class="serif text-xl font-semibold">Nearby Cafés</h2><p id="resultsSub" class="text-xs text-slate-500 mt-1">Places around your area</p></div>
+              <select id="sortSelect" class="field rounded-lg text-xs px-2 py-2"><option value="distance">Distance</option><option value="name">Name A–Z</option></select>
+            </div>
+            <div id="feedback" class="hidden mx-3 mb-2 rounded-xl bg-amber-50 text-amber-900 px-3 py-2 text-xs"></div>
+            <div id="resultsList" class="overflow-y-auto px-2 pb-2 flex-1" aria-live="polite"></div>
+            <div class="footer-note px-4 py-3 text-xs text-green-800 italic border-t border-stone-200/80">Local places. Real experiences.</div>
+          </aside>
+          <div class="map-wrap relative min-w-0">
+            <div id="map" aria-label="Interactive map showing nearby places"></div>
+            <div class="absolute top-3 left-3 z-[400] glass rounded-xl px-3 py-2 text-xs flex items-center gap-2"><span class="w-2 h-2 bg-green-700 rounded-full"></span><span id="mapCaption">Cafés near Bengaluru</span></div>
+            <div class="mobile-map-controls absolute right-3 bottom-4 z-[400] flex flex-col gap-2">
+              <button id="zoomIn" class="glass rounded-xl w-10 h-10 text-xl">+</button><button id="zoomOut" class="glass rounded-xl w-10 h-10 text-xl">−</button>
+              <button id="locateMe" class="glass rounded-xl w-10 h-10 grid place-items-center" title="Use my location"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2"/><path d="M12 1v3m0 16v3M1 12h3m16 0h3"/></svg></button>
+            </div>
+            <div class="absolute bottom-3 left-3 z-[400] rounded-lg bg-white/90 px-3 py-2 text-[10px] text-slate-600">© OpenStreetMap contributors</div>
+            <div id="detailCard" class="detail-desktop glass absolute z-[450] right-4 top-1/2 -translate-y-1/2 w-[255px] rounded-2xl p-3 hidden"></div>
+          </div>
+        </div>
+        <div class="mobile-sheet glass p-3">
+          <div class="flex justify-center pb-2"><span class="w-10 h-1 rounded-full bg-stone-300"></span></div>
+          <div class="flex items-center justify-between gap-2">
+            <div><h2 id="mobileHeading" class="serif font-semibold text-lg">Nearby Cafés</h2><p id="mobileCount" class="text-xs text-slate-500">Places around your area</p></div>
+            <div class="map-toggle gap-1 rounded-full bg-stone-100 p-1"><button id="mapViewBtn" class="primary rounded-full px-3 py-2 text-xs">Map</button><button id="listViewBtn" class="rounded-full px-3 py-2 text-xs">☷ List</button></div>
+          </div>
+          <div id="mobileSelected" class="detail-mobile hidden mt-3"></div>
+          <div id="mobileResults" class="sheet-content mt-2"></div>
+        </div>
+      </div>
+      <div class="flex flex-wrap items-center justify-between gap-3 px-2 pt-4 text-xs text-slate-500"><span>Thoughtfully local, wherever you go.</span><span>Map data © OpenStreetMap contributors</span></div>
+    </section>
+  </main>
+
+  <dialog id="locationDialog" class="rounded-2xl p-0 w-[min(92vw,420px)] shadow-2xl backdrop:bg-slate-900/40">
+    <form method="dialog" id="locationForm" class="p-5 bg-[var(--card)] text-[var(--ink)] rounded-2xl">
+      <div class="flex justify-between items-start"><div><h2 class="serif text-2xl font-semibold">Choose your area</h2><p class="text-sm text-slate-500 mt-1">Search a city or enter a place to explore.</p></div><button value="cancel" class="text-xl px-2" aria-label="Close">×</button></div>
+      <label class="block text-xs font-semibold mt-5 mb-2" for="areaInput">City or neighbourhood</label><input id="areaInput" class="field w-full rounded-xl px-4 py-3 text-sm" placeholder="e.g. Bengaluru, India" required minlength="2">
+      <p id="areaError" class="hidden text-xs text-red-600 mt-2">Enter at least 2 characters for an area.</p>
+      <button id="areaSubmit" class="primary w-full rounded-xl py-3 mt-4 font-semibold" value="default">Explore this area</button>
+      <button type="button" id="useLocation" class="w-full rounded-xl border border-stone-200 py-3 mt-2 text-sm">Use my current location</button>
+    </form>
+  </dialog>
+  <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-[1000] hidden glass rounded-full px-5 py-3 text-sm"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const $$ = s => [...document.querySelectorAll(s)];
+  const categories = {
+    cafe:{label:'Cafés',icon:'☕',tag:'amenity=cafe',overpass:'node["amenity"="cafe"]'},
+    restaurant:{label:'Restaurants',icon:'♨',tag:'amenity=restaurant',overpass:'node["amenity"="restaurant"]'},
+    pharmacy:{label:'Pharmacies',icon:'✚',tag:'amenity=pharmacy',overpass:'node["amenity"="pharmacy"]'},
+    atm:{label:'ATMs',icon:'▣',tag:'amenity=atm',overpass:'node["amenity"="atm"]'},
+    toilets:{label:'Public Toilets',icon:'♙',tag:'amenity=toilets',overpass:'node["amenity"="toilets"]'}
+  };
+  const samplePlaces = [
+    {id:'s1',name:'The Daily Grind',category:'cafe',lat:12.9757,lon:77.6009,distance:0.3,address:'12 Market Street, Central Bengaluru',hours:null,source:'Sample preview'},
+    {id:'s2',name:'Blue Tokai Coffee Roasters',category:'cafe',lat:12.9719,lon:77.6048,distance:0.6,address:'45 Brigade Road, Bengaluru',hours:null,source:'Sample preview'},
+    {id:'s3',name:'Third Wave Coffee',category:'cafe',lat:12.9782,lon:77.5945,distance:0.8,address:'27 Church Street, Bengaluru',hours:null,source:'Sample preview'},
+    {id:'s4',name:'Cafe Coffee Day',category:'cafe',lat:12.9694,lon:77.6094,distance:1.1,address:'Mahatma Gandhi Road, Bengaluru',hours:null,source:'Sample preview'},
+    {id:'s5',name:'The Filter Coffee',category:'cafe',lat:12.982,lon:77.602,distance:1.4,address:'18 Residency Road, Bengaluru',hours:null,source:'Sample preview'},
+    {id:'s6',name:'Indiranagar Social',category:'cafe',lat:12.9789,lon:77.6205,distance:1.8,address:'100 Feet Road, Bengaluru',hours:null,source:'Sample preview'},
+    {id:'s7',name:'Green Leaf Pharmacy',category:'pharmacy',lat:12.974,lon:77.594,distance:0.5,address:'Residency Road, Bengaluru',hours:null,source:'Sample preview'},
+    {id:'s8',name:'Central ATM',category:'atm',lat:12.9724,lon:77.6001,distance:0.4,address:'Mahatma Gandhi Road, Bengaluru',hours:null,source:'Sample preview'},
+    {id:'s9',name:'Market Street Kitchen',category:'restaurant',lat:12.9769,lon:77.607,distance:0.7,address:'Central Bengaluru',hours:null,source:'Sample preview'},
+    {id:'s10',name:'Public Convenience',category:'toilets',lat:12.981,lon:77.5967,distance:1.2,address:'Near Cubbon Park, Bengaluru',hours:null,source:'Sample preview'}
+  ];
+  let currentCategory='cafe', currentArea='Bengaluru', currentCenter=[12.975,77.601], places=[...samplePlaces], selectedId='s1', markerById={}, locationMarker=null, requestController=null, liveData=false;
+  const map = L.map('map',{zoomControl:false,scrollWheelZoom:true}).setView(currentCenter,15);
+  const osmTiles=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'});
+  const backupTiles=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Tiles &copy; Esri'});
+  let tileErrors=0;
+  osmTiles.on('tileerror',()=>{if(++tileErrors===3&&map.hasLayer(osmTiles)){map.removeLayer(osmTiles);backupTiles.addTo(map);}});
+  osmTiles.addTo(map);
+  L.control.zoom({position:'bottomright'}).addTo(map);
+  const iconFor = (place, selected=false) => L.divIcon({className:'custom-marker',html:`<div style="width:${selected?38:30}px;height:${selected?38:30}px;border-radius:50% 50% 50% 8px;transform:rotate(-45deg);background:${selected?'#c89b42':'#176b43'};border:3px solid #fffaf0;box-shadow:0 4px 10px #273a2b45;display:grid;place-items:center;color:white;font-size:${selected?17:14}px"><span style="transform:rotate(45deg)">${categories[place.category]?.icon||'•'}</span></div>`,iconSize:[selected?38:30,selected?38:30],iconAnchor:[selected?19:15,selected?38:30]});
+  function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+  function distanceKm(a,b){const R=6371,dLat=(b.lat-a.lat)*Math.PI/180,dLon=(b.lon-a.lon)*Math.PI/180;const x=Math.sin(dLat/2)**2+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLon/2)**2;return 2*R*Math.asin(Math.sqrt(x));}
+  function niceDistance(km){return km<1?`${Math.max(0.1,Math.round(km*10)/10)} km`:`${km.toFixed(1)} km`;}
+  function updateDistances(){places.forEach(p=>p.distance=distanceKm({lat:currentCenter[0],lon:currentCenter[1]},{lat:p.lat,lon:p.lon}));}
+  function visiblePlaces(){let list=places.filter(p=>p.category===currentCategory);const q=$('#searchInput').value.trim().toLowerCase();if(q)list=list.filter(p=>(p.name+' '+p.address+' '+categories[p.category].label).toLowerCase().includes(q));if($('#sortSelect').value==='name')list.sort((a,b)=>a.name.localeCompare(b.name));else list.sort((a,b)=>a.distance-b.distance);return list;}
+  function showToast(message){const t=$('#toast');t.textContent=message;t.classList.remove('hidden');clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>t.classList.add('hidden'),3200);}
+  function feedback(message='',kind='info'){const el=$('#feedback');if(!message){el.classList.add('hidden');return;}el.textContent=message;el.className='mx-3 mb-2 rounded-xl px-3 py-2 text-xs '+(kind==='error'?'bg-red-50 text-red-800':'bg-amber-50 text-amber-900');}
+  function renderMarkers(){Object.values(markerById).forEach(m=>map.removeLayer(m));markerById={};visiblePlaces().forEach(p=>{const m=L.marker([p.lat,p.lon],{icon:iconFor(p,p.id===selectedId)}).addTo(map);m.bindTooltip(`<strong>${esc(p.name)}</strong><br>${niceDistance(p.distance)}`,{direction:'top',offset:[0,-22]});m.on('click',()=>selectPlace(p.id));markerById[p.id]=m;});}
+  function placeRow(p,mobile=false){const active=p.id===selectedId;return `<button type="button" class="place-row ${active?'selected':''} w-full rounded-xl p-3 flex gap-3 text-left mb-1" data-place="${esc(p.id)}"><span class="place-icon"><span style="font-size:24px">${categories[p.category]?.icon||'•'}</span></span><span class="min-w-0 flex-1"><span class="flex items-start justify-between gap-2"><strong class="text-sm leading-snug">${esc(p.name)}</strong><span class="text-xs whitespace-nowrap text-slate-500">${niceDistance(p.distance)}</span></span><span class="block text-xs text-slate-500 mt-1">${categories[p.category]?.label||'Nearby place'}</span><span class="block text-xs text-slate-500 mt-2 truncate">⌖ ${esc(p.address||'Address not available')}</span>${p.hours?`<span class="block text-xs text-slate-500 mt-1">◷ ${esc(p.hours)}</span>`:''}</span><span class="text-slate-400 self-center">›</span></button>`;}
+  function details(p,mobile=false){if(!p)return '';return `<div class="rounded-2xl ${mobile?'p-3':'p-3'} bg-white/95 text-slate-800 border border-stone-200 shadow-lg"><div class="flex items-start gap-3"><div class="place-icon !w-14 !h-14"><span style="font-size:24px">${categories[p.category]?.icon||'•'}</span></div><div class="min-w-0 flex-1"><h3 class="serif text-lg font-semibold leading-tight">${esc(p.name)}</h3><p class="text-xs text-slate-500 mt-1">${categories[p.category]?.label||'Nearby place'} · ${niceDistance(p.distance)}</p></div><button class="close-detail text-slate-500 px-1" aria-label="Close details">×</button></div><p class="text-xs text-slate-600 mt-3">⌖ ${esc(p.address||'Address not available from map data')}</p>${p.hours?`<p class="text-xs text-slate-600 mt-2">◷ ${esc(p.hours)}</p>`:`<p class="text-xs text-slate-500 mt-2">Opening hours not listed in available map data.</p>`}<p class="text-[10px] text-slate-400 mt-2">${p.source==='OpenStreetMap'?'Details from OpenStreetMap':'Illustrative sample details — not verified'}</p><button class="primary direction-btn w-full rounded-xl py-3 mt-3 text-sm font-semibold" data-place="${esc(p.id)}">➤ &nbsp; Get directions</button></div>`;}
+  function render(){const list=visiblePlaces();const label=categories[currentCategory].label;$('#resultsHeading').textContent='Nearby '+label;$('#mobileHeading').textContent='Nearby '+label;$('#resultsSub').textContent=`${list.length} ${list.length===1?'place':'places'} · ${currentArea}`;$('#mobileCount').textContent=`${list.length} nearby ${list.length===1?'place':'places'}`;$('#mapCaption').textContent=`${label} near ${currentArea}`;$('#resultsList').innerHTML=list.length?list.map(p=>placeRow(p)).join(''):`<div class="p-6 text-center"><div class="text-3xl mb-2">⌕</div><p class="font-semibold text-sm">No places found</p><p class="text-xs text-slate-500 mt-2">Try another keyword or category, or choose a different area.</p><button id="clearSearch" class="primary rounded-full px-4 py-2 mt-4 text-xs">Clear search</button></div>`;$('#mobileResults').innerHTML=list.length?list.map(p=>placeRow(p,true)).join(''):`<div class="p-5 text-center text-sm">No places found. Try another search.</div>`;const selected=list.find(p=>p.id===selectedId)||list[0];if(selected && selected.id!==selectedId)selectedId=selected.id;$('#detailCard').innerHTML=selected?details(selected):'';$('#detailCard').classList.toggle('hidden',!selected);$('#mobileSelected').innerHTML=selected?details(selected,true):'';$('#mobileSelected').classList.toggle('hidden',!selected);renderMarkers();if(selected&&markerById[selected.id])markerById[selected.id].setZIndexOffset(1000);if(!list.length)feedback('No matches for this search. Clear the keyword or choose another category.');else feedback('');}
+  function selectPlace(id){selectedId=id;const p=places.find(x=>x.id===id);if(p){render();map.flyTo([p.lat,p.lon],Math.max(map.getZoom(),16),{duration:.45});if(window.innerWidth<=520)$('#mobileSelected').scrollIntoView({behavior:'smooth',block:'nearest'});}}
+  function setCategory(cat){if(!categories[cat])return;currentCategory=cat;$$('[data-category]').forEach(b=>b.classList.toggle('active',b.dataset.category===cat));const first=visiblePlaces()[0];selectedId=first?.id||null;render();if(window.innerWidth<=520)$('#mobileSelected').classList.remove('hidden');}
+  async function fetchNearby(){if(requestController)requestController.abort();requestController=new AbortController();const list=$('#resultsList');list.innerHTML='<div class="p-8 text-center text-sm text-slate-500"><span class="inline-block animate-spin mr-2">◌</span>Finding nearby places…</div>';$('#locationStatus').innerHTML='<span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>Searching OpenStreetMap data…';feedback('Loading nearby map data…');const [lat,lon]=currentCenter;const query=`[out:json][timeout:12];(${categories[currentCategory].overpass}(around:2500,${lat},${lon}););out center tags 35;`;try{const response=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:'data='+encodeURIComponent(query),signal:requestController.signal});if(!response.ok)throw new Error('Map data service returned '+response.status);const data=await response.json();const live=(data.elements||[]).map((e,i)=>{const tags=e.tags||{},plat=e.lat??e.center?.lat,plon=e.lon??e.center?.lon;if(!plat||!plon)return null;const addr=[tags['addr:housenumber'],tags['addr:street'],tags['addr:suburb'],tags['addr:city']].filter(Boolean).join(' ');return{id:'osm-'+e.type+'-'+e.id,name:tags.name||tags.brand||`${categories[currentCategory].label.slice(0,-1)} nearby`,category:currentCategory,lat:plat,lon:plon,distance:distanceKm({lat,lon},{lat:plat,lon:plon}),address:addr||tags['addr:place']||'Address not listed in OpenStreetMap',hours:tags.opening_hours||null,source:'OpenStreetMap'};}).filter(Boolean);if(live.length){places=live;liveData=true;selectedId=live[0].id;updateDistances();$('#locationStatus').innerHTML='<span class="w-2 h-2 rounded-full bg-green-600"></span>Live OpenStreetMap results · '+esc(currentArea);feedback('Showing live OpenStreetMap data. Missing details are left blank.');}else{places=samplePlaces.filter(p=>p.category===currentCategory);if(!places.length)places=samplePlaces.map((p,i)=>({...p,category:currentCategory,id:'sample-'+currentCategory+'-'+i}));liveData=false;selectedId=places[0]?.id||null;updateDistances();$('#locationStatus').innerHTML='<span class="w-2 h-2 rounded-full bg-amber-500"></span>No mapped results returned · sample preview';feedback('No mapped places were returned for this category. Showing illustrative preview results instead.');}render();}catch(err){if(err.name==='AbortError')return;places=samplePlaces.filter(p=>p.category===currentCategory);if(!places.length)places=samplePlaces.map((p,i)=>({...p,category:currentCategory,id:'sample-'+currentCategory+'-'+i}));liveData=false;selectedId=places[0]?.id||null;updateDistances();$('#locationStatus').innerHTML='<span class="w-2 h-2 rounded-full bg-amber-500"></span>Offline preview · live data unavailable';feedback('Could not load live map data. Check your connection; showing sample preview results.', 'error');render();}}
+  async function geocodeArea(area){const err=$('#areaError');err.classList.add('hidden');if(area.trim().length<2){err.classList.remove('hidden');return;}const btn=$('#areaSubmit');btn.disabled=true;btn.textContent='Finding area…';try{const r=await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q='+encodeURIComponent(area));if(!r.ok)throw new Error('Location search failed');const d=await r.json();if(!d.length)throw new Error('No matching location found. Try a nearby city or landmark.');currentCenter=[Number(d[0].lat),Number(d[0].lon)];currentArea=area.trim();$('#locationLabel').textContent=currentArea;map.setView(currentCenter,14);$('#locationDialog').close();await fetchNearby();showToast('Exploring '+currentArea);}catch(e){err.textContent=e.message||'Could not find that area. Try again.';err.classList.remove('hidden');}finally{btn.disabled=false;btn.textContent='Explore this area';}}
+  $$('#categoryChips [data-category]').forEach(b=>b.addEventListener('click',()=>{setCategory(b.dataset.category);fetchNearby();}));
+  $('#searchForm').addEventListener('submit',e=>{e.preventDefault();render();if(!visiblePlaces().length)feedback('No matches. Try a shorter keyword or change the category.');});
+  $('#searchInput').addEventListener('input',()=>render());
+  $('#sortSelect').addEventListener('change',render);
+  document.addEventListener('click',e=>{const row=e.target.closest('[data-place]');if(row&&!e.target.closest('.direction-btn')){selectPlace(row.dataset.place);return;}if(e.target.closest('.direction-btn')){const id=e.target.closest('.direction-btn').dataset.place,p=places.find(x=>x.id===id);if(p)window.open(`https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route=${currentCenter[0]}%2C${currentCenter[1]}%3B${p.lat}%2C${p.lon}`,'_blank','noopener');}if(e.target.closest('.close-detail')){$('#detailCard').classList.add('hidden');$('#mobileSelected').classList.add('hidden');}if(e.target.id==='clearSearch'){$('#searchInput').value='';render();}});
+  $('#locationButton').addEventListener('click',()=>{$('#areaInput').value=currentArea;$('#locationDialog').showModal();});
+  $('#locationForm').addEventListener('submit',e=>{e.preventDefault();geocodeArea($('#areaInput').value);});
+  $('#useLocation').addEventListener('click',()=>locateUser(true));
+  function locateUser(fromDialog=false){if(!navigator.geolocation){showToast('Location access is not supported by this browser. Search for an area instead.');return;}$('#locationStatus').innerHTML='<span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>Requesting location permission…';navigator.geolocation.getCurrentPosition(async pos=>{currentCenter=[pos.coords.latitude,pos.coords.longitude];currentArea='Your location';$('#locationLabel').textContent='Current location';if(locationMarker)map.removeLayer(locationMarker);locationMarker=L.circleMarker(currentCenter,{radius:8,color:'#fff',weight:3,fillColor:'#1976d2',fillOpacity:1}).addTo(map).bindPopup('You are here');map.setView(currentCenter,15);if(fromDialog)$('#locationDialog').close();await fetchNearby();showToast('Nearby places updated.');},err=>{const msg=err.code===1?'Location permission was denied. Enter an area manually.':'Could not determine your location. Search for an area manually.';$('#locationStatus').innerHTML='<span class="w-2 h-2 rounded-full bg-amber-500"></span>'+msg;showToast(msg);},{enableHighAccuracy:true,timeout:10000,maximumAge:60000});}
+  $('#locateMe').addEventListener('click',()=>locateUser(false));$('#zoomIn').addEventListener('click',()=>map.zoomIn());$('#zoomOut').addEventListener('click',()=>map.zoomOut());
+  $('#themeToggle').addEventListener('click',()=>{document.body.classList.toggle('dark');const dark=document.body.classList.contains('dark');$('#themeToggle').setAttribute('aria-label',dark?'Switch to light theme':'Switch to dark theme');$('#themeIcon').innerHTML=dark?'<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>':'<path d="M20.5 14.1A8.4 8.4 0 0 1 9.9 3.5 8.5 8.5 0 1 0 20.5 14.1Z"/>';});
+  $('#mapViewBtn').addEventListener('click',()=>{$('.mobile-sheet').classList.remove('list-mode');$('#mapViewBtn').className='primary rounded-full px-3 py-2 text-xs';$('#listViewBtn').className='rounded-full px-3 py-2 text-xs';map.invalidateSize();});
+  $('#listViewBtn').addEventListener('click',()=>{$('.mobile-sheet').classList.add('list-mode');$('#listViewBtn').className='primary rounded-full px-3 py-2 text-xs';$('#mapViewBtn').className='rounded-full px-3 py-2 text-xs';$('#mobileResults').scrollIntoView({behavior:'smooth',block:'nearest'});});
+  map.on('moveend',()=>{if(!liveData)return;const c=map.getCenter();if(Math.abs(c.lat-currentCenter[0])>.03||Math.abs(c.lng-currentCenter[1])>.03){/* Keep explicit area center until user chooses to search again. */}});
+  render();
+  // Try live data on first load; sample preview remains available if the service is offline.
+  fetchNearby();
+})();
+</script>
+</body>
+</html>
