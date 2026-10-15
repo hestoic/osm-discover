@@ -5,7 +5,7 @@ Find the places you need, right where you are.
 OpenStreetMap Discover is a responsive web app that makes it easier to find
 nearby places by category, without needing to know a place's exact name.
 
-**Live demo:** https://your-username.github.io/osm-discover/
+**Live demo:** https://hestoic.github.io/osm-discover/
 
 ## The problem
 
